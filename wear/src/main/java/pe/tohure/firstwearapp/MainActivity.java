@@ -1,6 +1,8 @@
 package pe.tohure.firstwearapp;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -18,6 +20,8 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
+
+import java.io.ByteArrayOutputStream;
 
 public class MainActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks,
@@ -57,12 +61,20 @@ public class MainActivity extends Activity implements
 
     }
 
+    private Asset createAssetFromBitmap(Bitmap bitmap) {
+        final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG,100,byteArrayOutputStream);
+        return Asset.createFromBytes(byteArrayOutputStream.toByteArray());
+    }
+
     public void sendStepCount(int steps, long timestamp) {
+        Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.lorem_image);
+        Asset asset = createAssetFromBitmap(icon);
+
         PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/step-counter");
         putDataMapRequest.getDataMap().putInt("step-count", steps);
         putDataMapRequest.getDataMap().putLong("timestamp", timestamp);
-
-        //Asset asset = createAssetFromBitmap(bitmap);
+        putDataMapRequest.getDataMap().putAsset("profile-image",asset);
 
         PutDataRequest request = putDataMapRequest.asPutDataRequest();
         Wearable.DataApi.putDataItem(mGoogleApiClient, request).setResultCallback(this);
