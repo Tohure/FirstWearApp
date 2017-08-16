@@ -9,6 +9,7 @@ import com.google.android.gms.wearable.DataEvent;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.DataMapItem;
+import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 
 public class WearService extends WearableListenerService {
@@ -29,6 +30,13 @@ public class WearService extends WearableListenerService {
                 }
             }
         }
+    }
 
+    @Override
+    public void onMessageReceived(MessageEvent messageEvent) {
+        //super.onMessageReceived(messageEvent);
+        if (messageEvent.getPath().equals("/path/message")) {
+            //TODO: Something with byte array
+        }
     }
 }

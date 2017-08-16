@@ -14,9 +14,13 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.Asset;
 import com.google.android.gms.wearable.DataApi;
+import com.google.android.gms.wearable.MessageApi;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.PutDataMapRequest;
 import com.google.android.gms.wearable.PutDataRequest;
 import com.google.android.gms.wearable.Wearable;
@@ -26,7 +30,8 @@ import java.io.ByteArrayOutputStream;
 public class MainActivity extends Activity implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        ResultCallback<DataApi.DataItemResult>, View.OnClickListener {
+        ResultCallback<DataApi.DataItemResult>,
+        View.OnClickListener {
 
     private TextView mTextView;
     private GoogleApiClient mGoogleApiClient;
@@ -63,7 +68,7 @@ public class MainActivity extends Activity implements
 
     private Asset createAssetFromBitmap(Bitmap bitmap) {
         final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG,100,byteArrayOutputStream);
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream);
         return Asset.createFromBytes(byteArrayOutputStream.toByteArray());
     }
 
@@ -74,24 +79,47 @@ public class MainActivity extends Activity implements
         PutDataMapRequest putDataMapRequest = PutDataMapRequest.create("/step-counter");
         putDataMapRequest.getDataMap().putInt("step-count", steps);
         putDataMapRequest.getDataMap().putLong("timestamp", timestamp);
-        putDataMapRequest.getDataMap().putAsset("profile-image",asset);
+        putDataMapRequest.getDataMap().putAsset("profile-image", asset);
 
         PutDataRequest request = putDataMapRequest.asPutDataRequest();
         Wearable.DataApi.putDataItem(mGoogleApiClient, request).setResultCallback(this);
     }
 
-    @Override
-    public void onResult(@NonNull DataApi.DataItemResult dataItemResult) {
-        if (!dataItemResult.getStatus().isSuccess()) {
-            Toast.makeText(this,"Si service",Toast.LENGTH_SHORT).show();
-        } else {
-            Toast.makeText(this,"No service",Toast.LENGTH_SHORT).show();
+    private void sendMessage(Node node) {
+        Wearable.MessageApi.sendMessage(mGoogleApiClient, node.getId(), "/path/message", new byte[0]).setResultCallback(
+                new ResultCallback<MessageApi.SendMessageResult>() {
+                    @Override
+                    public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
+                        if (!sendMessageResult.getStatus().isSuccess()) {
+                            //FAILED MESSAGE
+                        }
+                    }
+                }
+        );
+    }
+
+    private void getNodeApiID() {
+        NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await();
+
+        for (Node node : nodes.getNodes()) {
+            sendMessage(node);
         }
     }
 
     @Override
     public void onClick(View view) {
-        Toast.makeText(this,"Click",Toast.LENGTH_SHORT).show();
-        sendStepCount(10,1502773150);
+        Toast.makeText(this, "Click", Toast.LENGTH_SHORT).show();
+        sendStepCount(10, 1502773150);
     }
+
+    @Override
+    public void onResult(@NonNull DataApi.DataItemResult dataItemResult) {
+        if (!dataItemResult.getStatus().isSuccess()) {
+            Toast.makeText(this, "No service", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Si service", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
 }
